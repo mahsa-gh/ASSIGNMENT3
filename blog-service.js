@@ -84,9 +84,13 @@ const getPrograms = () => {
 
 const getStudentsByStatus = (status) => {
   return new Promise((resolve, reject) => {
-    const filteredByStatus = students.filter((student) => {
-      return student.status == status
-    })
+    const filteredByStatus = []
+    for (let index = 0; index < students.length; index++) {
+      if (students[index].status == status) {
+        filteredByStatus.push(students[index])
+      }
+
+    }
     if (filteredByStatus.length == 0) reject('No results found (getStudentsByStatus)')
     resolve(filteredByStatus)
   })
@@ -94,9 +98,13 @@ const getStudentsByStatus = (status) => {
 
 const getStudentsByProgramCode = (programCode) => {
   return new Promise((resolve, reject) => {
-    const filteredByProgram = students.filter((student) => {
-      return student.program == programCode
-    })
+    const filteredByProgram = []
+    for (let index = 0; index < students.length; index++) {
+      if (students[index].program == programCode) {
+        filteredByProgram.push(students[index])
+      }
+
+    }
     if (filteredByProgram.length == 0) reject('No results found (getStudentsByProgramCode)')
     resolve(filteredByProgram)
   })
@@ -104,9 +112,13 @@ const getStudentsByProgramCode = (programCode) => {
 
 const getStudentsByExpectedCredential = (credential) => {
   return new Promise((resolve, reject) => {
-    const filteredByCredential = students.filter((student) => {
-      return student.expectedCredential == credential
-    })
+    const filteredByCredential = []
+    for (let index = 0; index < students.length; index++) {
+      if (students[index].expectedCredential == credential) {
+        filteredByCredential.push(students[index])
+      }
+
+    }
     if (filteredByCredential.length == 0) reject('No results found (getStudentsByExpectedCredential)')
     resolve(filteredByCredential)
   })
@@ -118,7 +130,7 @@ const getStudentById = (sid) => {
       return student.studentID == sid
     })
     if (filteredBySid.length == 0) reject('No results found (getStudentById)')
-    resolve(filteredBySid)
+    resolve(filteredBySid[0])
   })
 }
 const addStudent = (StudentData) => {
@@ -151,6 +163,29 @@ const addStudent = (StudentData) => {
     resolve()
   })
 }
+const updateStudent = (studentData) => {
+  return new Promise((resolve, reject) => {
+    for (let i = 0; i < students.length; i++) {
+      const id = studentData.studentID
+      if (students[i].studentID.trim() == id.trim()) {
+        students[i].firstName = studentData.firstName
+        students[i].lastName = studentData.lastName
+        students[i].email = studentData.email
+        students[i].phone = studentData.phone
+        students[i].addressStreet = studentData.addressStreet
+        students[i].addressCity = studentData.addressCity
+        students[i].addressState = studentData.addressState
+        students[i].addressPostal = studentData.addressPostal
+        students[i].isInternationalStudent = studentData.isInternationalStudent
+        students[i].expectedCredential = studentData.expectedCredential
+        students[i].status = studentData.status
+        students[i].program = studentData.program
+        students[i].registrationDate = studentData.registrationDate
+      }
+    }
+    resolve()
+  })
+}
 
 module.exports = {
   initialize,
@@ -161,5 +196,6 @@ module.exports = {
   getStudentById,
   getStudentsByExpectedCredential,
   getStudentsByProgramCode,
-  addStudent
+  addStudent,
+  updateStudent
 };
