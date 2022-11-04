@@ -1,4 +1,3 @@
-
 /*********************************************************************************
 *  WEB322 – Assignment 04
 *  I declare that this assignment is my own work in accordance with Seneca  Academic Policy.  No part 
@@ -10,7 +9,6 @@
 *  Online (Heroku) Link: 
 *
 ********************************************************************************/ 
-
 const HTTP_PORT = process.env.PORT || 8080;
 
 const express = require('express');
