@@ -1,3 +1,4 @@
+
 /*********************************************************************************
 *  WEB322 – Assignment 04
 *  I declare that this assignment is my own work in accordance with Seneca  Academic Policy.  No part 
@@ -9,6 +10,7 @@
 *  Online (Heroku) Link: 
 *
 ********************************************************************************/ 
+
 const HTTP_PORT = process.env.PORT || 8080;
 
 const express = require('express');
@@ -138,7 +140,7 @@ app.get('/programs', (req, res, next) => {
   data
     .getPrograms()
     .then((data) => {
-      res.json(data);
+      res.render('programs', { programs: data });
     })
     .catch((err) => {
       console.log('Error retrieving departments: ' + err);
