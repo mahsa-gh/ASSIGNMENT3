@@ -150,7 +150,7 @@ app.get('/students/add', (req, res) => {
   res.render('addStudent');
 })
 app.get('/images/add', (req, res) => {
-  res.render('AddImage');
+  res.render('addImage');
 })
 app.post('/images/add', upload.single('imageFile'), (req, res) => {
   res.redirect('/images')
