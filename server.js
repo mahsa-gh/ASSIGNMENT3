@@ -1,14 +1,18 @@
 /*********************************************************************************
-*  WEB322 – Assignment 04
-*  I declare that this assignment is my own work in accordance with Seneca  Academic Policy.  No part 
-*  of this assignment has been copied manually or electronically from any other source 
-*  (including 3rd party web sites) or distributed to other students.
+*  WEB322 – Assignment 05
+*  I declare that this assignment is my own work in accordance with Seneca  Academic Policy.  No part of this
+*  assignment has been copied manually or electronically from any other source (including web sites) or 
+*  distributed to other students.
 * 
-*  Name: Mahsa Ghasemi  Student ID: 152449195 Date: 4th November 2022
+*  Name: Mahsa Ghasemi  Student ID: 152449195  Date: November 18th
 *
-*  Online (Heroku) Link: 
+*  Online (Cyclic) Link: 
 *
 ********************************************************************************/ 
+
+
+
+
 const HTTP_PORT = process.env.PORT || 8080;
 
 const express = require('express');
@@ -76,23 +80,46 @@ app.get('/about', (req, res, next) => {
 app.get('/students', (req, res, next) => {
   if (req.query.status) {
     return data.getStudentsByStatus(req.query.status)
-      .then(data => { res.render("students", { students: data }) })
+      .then(data => {
+        if (data.length > 0) {
+          return res.render("students", { students: data })
+        } else {
+          return res.render("students", { message: "no results" });
+        }
+
+      })
       .catch(err => console.log(err))
   }
   if (req.query.program) {
     return data.getStudentsByProgramCode(req.query.program)
-      .then(data => { res.render("students", { students: data }) })
+      .then(data => {
+        if (data.length > 0) {
+          return res.render("students", { students: data })
+        } else {
+          return res.render("students", { message: "no results" });
+        }
+      })
       .catch(err => console.log(err))
   }
   if (req.query.credential) {
     return data.getStudentsByExpectedCredential(req.query.credential)
-      .then(data => { res.render("students", { students: data }) })
+      .then(data => {
+        if (data.length > 0) {
+          return res.render("students", { students: data })
+        } else {
+          return res.render("students", { message: "no results" });
+        }
+      })
       .catch(err => console.log(err))
   }
   data
     .getAllStudents()
     .then((data) => {
-      res.render("students", { students: data })
+      if (data.length > 0) {
+        res.render("students", { students: data })
+      } else {
+        res.render("students", { message: "no results" });
+      }
     })
     .catch((err) => {
       console.log('Error retrieving employees: ' + err);
@@ -101,12 +128,44 @@ app.get('/students', (req, res, next) => {
 });
 
 app.get('/student/:sid', (req, res) => {
-  data.getStudentById(req.params.sid)
+  // initialize an empty object to store the values
+  let viewData = {};
+
+  data.getStudentById(req.params.sid).then((data) => {
+    if (data) {
+      viewData.student = data; //store student data in the "viewData" object as "student"
+    } else {
+      viewData.student = null; // set student to null if none were returned
+    }
+  }).catch(() => {
+    viewData.student = null; // set student to null if there was an error 
+  }).then(data.getPrograms)
     .then((data) => {
-      res.render("student", { student: data })
-    })
-    .catch(err => console.log(err))
-})
+      viewData.programs = data; // store program data in the "viewData" object as "programs"
+
+      // loop through viewData.programs and once we have found the programCode that matches
+      // the student's "program" value, add a "selected" property to the matching 
+      // viewData.programs object
+
+      for (let i = 0; i < viewData.programs.length; i++) {
+        if (viewData.programs[i].programCode == viewData.student.program) {
+          viewData.programs[i].selected = true;
+        }
+      }
+
+    }).catch(() => {
+      viewData.programs = []; // set programs to empty if there was an error
+    }).then(() => {
+      if (viewData.student == null) { // if no student - return an error
+        res.status(404).send("Student Not Found");
+      } else {
+        res.render("student", { viewData: viewData }); // render the "student" view
+      }
+    }).catch((err) => {
+      res.status(500).send("Unable to Show Students");
+    });
+});
+
 
 app.post('/students/add', (req, res) => {
   data.addStudent(req.body).then(
@@ -138,7 +197,11 @@ app.get('/programs', (req, res, next) => {
   data
     .getPrograms()
     .then((data) => {
-      res.render('programs', { programs: data });
+      if (data.length > 0) {
+        return res.render("programs", { programs: data })
+      } else {
+        return res.render("programs", { message: "no results" });
+      };
     })
     .catch((err) => {
       console.log('Error retrieving departments: ' + err);
@@ -147,7 +210,13 @@ app.get('/programs', (req, res, next) => {
 });
 
 app.get('/students/add', (req, res) => {
-  res.render('addStudent');
+  data.getPrograms().
+    then(data => {
+      res.render("addStudent", { programs: data });
+    })
+    .catch(err => {
+      res.render("addStudent", { programs: [] });
+    })
 })
 app.get('/images/add', (req, res) => {
   res.render('AddImage');
@@ -166,6 +235,43 @@ app.get('/images', (req, res) => {
     })
   })
 })
+app.get('/programs/add', (req, res) => {
+  res.render("addProgram")
+})
+
+app.post('/programs/add', (req, res) => {
+  data.addProgram(req.body).then(() => { res.redirect('/programs') })
+})
+
+app.post("/programs/add", (req, res) => {
+  data.updateProgram(req.body).then(() => {
+    res.redirect("/programs");
+  }).catch(err => console.log(err))
+});
+
+app.get('/program/:programCode', (req, res) => {
+  data.getProgramByCode(req.params.programCode)
+    .then((data) => {
+      if (data.length > 0) {
+        return res.render("program", { program: data })
+      } else {
+        return res.status(404).send("Program Not Found");
+      }
+    })
+    .catch(err => console.log(err))
+})
+
+app.get('/programs/delete/:programCode', (req, res) => {
+  data.deleteProgramByCode(req.params.programCode).then(() => {
+    res.redirect('/programs')
+  }).catch(err => { res.status(500).send("Unable to Remove Program / Program not found)"); })
+})
+app.get('/students/delete/:studentID', (req, res) => {
+  data.deleteStudentById(req.params.studentID).then(() => {
+    res.redirect('/students')
+  }).catch(err => { res.status(500).send("Unable to Remove Student / Student not found"); })
+})
+
 
 app.use((req, res, next) => {
   res.status(404).send('Page Not Found');

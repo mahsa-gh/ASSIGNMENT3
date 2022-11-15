@@ -1,191 +1,246 @@
-const fs = require('fs');
-const { resolve } = require('path');
-const path = require('path');
+const Sequelize = require('sequelize');
+var sequelize = new Sequelize('gvfbnjhd', 'gvfbnjhd', 'nqqGZszf8a-h8u0RJWDVdp8LHUHf-Sz1', {
+  host: 'lucky.db.elephantsql.com',
+  dialect: 'postgres',
+  port: 5432,
+  dialectOptions: {
+    ssl: { rejectUnauthorized: false }
+  }
+  , query: { raw: true }
+});
 
-var students = [];
-var programs = [];
+var Student = sequelize.define('Student', {
+  studentID: {
+    type: Sequelize.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  firstName: Sequelize.STRING,
+  lastName: Sequelize.STRING,
+  email: Sequelize.STRING,
+  phone: Sequelize.STRING,
+  addressStreet: Sequelize.STRING,
+  addressCity: Sequelize.STRING,
+  addressState: Sequelize.STRING,
+  addressPostal: Sequelize.STRING,
+  isInternationalStudent: Sequelize.BOOLEAN,
+  expectedCredential: Sequelize.STRING,
+  status: Sequelize.STRING,
+  registrationDate: Sequelize.STRING,
+});
+var Program = sequelize.define('Program', {
+  programCode: {
+    type: Sequelize.STRING,
+    primaryKey: true
+  },
+  programName: Sequelize.STRING,
+});
+
+Program.hasMany(Student, { foreignKey: 'program' });
 
 const initialize = () => {
   return new Promise((resolve, reject) => {
-    try {
-      fs.readFile(
-        path.join(__dirname, '/data/students.json'),
-        'utf-8',
-        (err, data) => {
-          if (err) {
-            console.log(err);
-            throw err;
-          }
-
-          students = JSON.parse(data);
-        }
-      );
-
-      fs.readFile(
-        path.join(__dirname, '/data/programs.json'),
-        'utf-8',
-        (err, data) => {
-          if (err) {
-            console.log(err);
-            throw err;
-          }
-
-          programs = JSON.parse(data);
-        }
-      );
-    } catch (ex) {
-      console.log('Error encountered in file reading.');
-      reject('Error encountered in file reading.');
+    sequelize.sync().then(() => {
+      console.log("connected to database successfully")
+      resolve()
     }
-    resolve();
+    ).catch(err => { reject("unable to sync the database") })
+
   });
 };
 
 const getAllStudents = () => {
   return new Promise((resolve, reject) => {
-    if (students.length === 0) {
-      reject('No students found!');
-    } else {
-      resolve(
-        students.filter(() => {
-          return true;
-        })
-      );
-    }
+    Student.findAll().then(function (data) {
+      resolve(data)
+    }).catch(err => {
+      reject("no results returned (getAllStudents)")
+    })
   });
 };
 
 const getInternationalStudents = () => {
   return new Promise((resolve, reject) => {
-    const all_students = students.filter((student) => {
-      return student.isInternationalStudent === true;
-    });
-    if (all_students.length > 0) {
-      resolve(all_students);
-    } else {
-      reject('No results found!');
-    }
+    reject()
   });
 };
 
 const getPrograms = () => {
   return new Promise((resolve, reject) => {
-    if (programs.length === 0) {
-      reject('No results found');
-    } else {
-      resolve(
-        programs.filter(() => {
-          return true;
-        })
-      );
-    }
+    Program.findAll().then(function (data) {
+      resolve(data)
+    }).catch(err => {
+      reject("no results returned (getPrograms)")
+    })
   });
 };
 
 const getStudentsByStatus = (status) => {
   return new Promise((resolve, reject) => {
-    const filteredByStatus = []
-    for (let index = 0; index < students.length; index++) {
-      if (students[index].status == status) {
-        filteredByStatus.push(students[index])
-      }
-
-    }
-    if (filteredByStatus.length == 0) reject('No results found (getStudentsByStatus)')
-    resolve(filteredByStatus)
+    Student.findAll({ where: { status: status } }).then(function (data) {
+      resolve(data)
+    }).catch(err => {
+      reject("no results returned (getStudentsByStatus)")
+    })
   })
 }
 
 const getStudentsByProgramCode = (programCode) => {
   return new Promise((resolve, reject) => {
-    const filteredByProgram = []
-    for (let index = 0; index < students.length; index++) {
-      if (students[index].program == programCode) {
-        filteredByProgram.push(students[index])
-      }
-
-    }
-    if (filteredByProgram.length == 0) reject('No results found (getStudentsByProgramCode)')
-    resolve(filteredByProgram)
+    Student.findAll({ where: { program: programCode } }).then(function (data) {
+      resolve(data)
+    }).catch(err => {
+      reject("no results returned (getStudentsByProgramCode)")
+    })
   })
 }
 
 const getStudentsByExpectedCredential = (credential) => {
   return new Promise((resolve, reject) => {
-    const filteredByCredential = []
-    for (let index = 0; index < students.length; index++) {
-      if (students[index].expectedCredential == credential) {
-        filteredByCredential.push(students[index])
-      }
-
-    }
-    if (filteredByCredential.length == 0) reject('No results found (getStudentsByExpectedCredential)')
-    resolve(filteredByCredential)
+    Student.findAll({ where: { expectedCredential: credential } }).then(function (data) {
+      resolve(data)
+    }).catch(err => {
+      reject("no results returned (getStudentsByExpectedCredential)")
+    })
   })
 }
 
 const getStudentById = (sid) => {
   return new Promise((resolve, reject) => {
-    const filteredBySid = students.filter((student) => {
-      return student.studentID == sid
+    Student.findAll({ where: { studentID: sid } }).then(function (data) {
+      resolve(data[0])
+    }).catch(err => {
+      reject("no results returned (getStudentById)")
     })
-    if (filteredBySid.length == 0) reject('No results found (getStudentById)')
-    resolve(filteredBySid[0])
   })
 }
 const addStudent = (StudentData) => {
   return new Promise((resolve, reject) => {
-    let isInternational
-    if (StudentData.isInternationalStudent == undefined) {
-      isInternational = false
-    } else {
-      isInternational = true
-    }
-    const studentID = students.length + 1
-    const studentObject = {
-      "studentID": studentID,
-      "firstName": StudentData.firstName,
-      "lastName": StudentData.lastName,
-      "email": StudentData.email,
-      "phone": StudentData.phone,
-      "addressStreet": StudentData.addressStreet,
-      "addressCity": StudentData.addressCity,
-      "addressState": StudentData.addressState,
-      "addressPostal": StudentData.addressPostal,
-      "gender": StudentData.gender,
-      "isInternationalStudent": isInternational,
-      "expectedCredential": StudentData.expectedCredential,
-      "status": StudentData.status,
-      "program": StudentData.program,
-      "registrationDate": StudentData.registrationDate
-    }
-    students.push(studentObject)
-    resolve()
-  })
-}
-const updateStudent = (studentData) => {
-  return new Promise((resolve, reject) => {
-    for (let i = 0; i < students.length; i++) {
-      const id = studentData.studentID
-      if (students[i].studentID.trim() == id.trim()) {
-        students[i].firstName = studentData.firstName
-        students[i].lastName = studentData.lastName
-        students[i].email = studentData.email
-        students[i].phone = studentData.phone
-        students[i].addressStreet = studentData.addressStreet
-        students[i].addressCity = studentData.addressCity
-        students[i].addressState = studentData.addressState
-        students[i].addressPostal = studentData.addressPostal
-        students[i].isInternationalStudent = studentData.isInternationalStudent
-        students[i].expectedCredential = studentData.expectedCredential
-        students[i].status = studentData.status
-        students[i].program = studentData.program
-        students[i].registrationDate = studentData.registrationDate
+    StudentData.isInternationalStudent = (StudentData.isInternationalStudent) ? true : false;
+    for (const property in StudentData) {
+      if (StudentData[property] == '') {
+        StudentData[property] = null
       }
     }
-    resolve()
+    Student.create({
+      studentID: StudentData.studentID,
+      firstName: StudentData.firstName,
+      lastName: StudentData.lastName,
+      email: StudentData.email,
+      phone: StudentData.phone,
+      addressStreet: StudentData.addressStreet,
+      addressCity: StudentData.addressCity,
+      addressState: StudentData.addressState,
+      addressPostal: StudentData.addressPostal,
+      isInternationalStudent: StudentData.isInternationalStudent,
+      expectedCredential: StudentData.expectedCredential,
+      status: StudentData.status,
+      registrationDate: StudentData.registrationDate,
+      program: StudentData.program
+    }
+    ).then(() => {
+      resolve()
+    }).catch(err => {
+      reject("no results returned (addStudent)")
+    })
+
+
   })
 }
+const updateStudent = (StudentData) => {
+  return new Promise((resolve, reject) => {
+    StudentData.isInternationalStudent = (StudentData.isInternationalStudent) ? true : false;
+    for (const property in StudentData) {
+      if (StudentData[property] == '') {
+        StudentData[property] = null
+      }
+    }
+    Student.update({
+      studentID: StudentData.studentID,
+      firstName: StudentData.firstName,
+      lastName: StudentData.lastName,
+      email: StudentData.email,
+      phone: StudentData.phone,
+      addressStreet: StudentData.addressStreet,
+      addressCity: StudentData.addressCity,
+      addressState: StudentData.addressState,
+      addressPostal: StudentData.addressPostal,
+      isInternationalStudent: StudentData.isInternationalStudent,
+      expectedCredential: StudentData.expectedCredential,
+      status: StudentData.status,
+      registrationDate: StudentData.registrationDate,
+      program: StudentData.program
+    }, {
+      where: { studentID: StudentData.studentID }
+    }
+    ).then(() => {
+      resolve()
+    }).catch(err => {
+      reject("no results returned (updateStudent)")
+    })
+
+  })
+}
+
+const addProgram = (programData) => {
+  return new Promise((resolve, reject) => {
+    for (const property in programData) {
+      if (programData[property] == '') {
+        programData[property] = null
+      }
+    }
+    Program.create({
+      programCode: programData.programCode,
+      programName: programData.programName
+    }).then(() => {
+      resolve()
+    }).catch(err => reject("unable to create program (addProgram)"))
+  })
+}
+const updateProgram = (programData) => {
+  return new Promise((resolve, reject) => {
+    for (const property in programData) {
+      if (programData[property] == '') {
+        programData[property] = null
+      }
+    }
+    Program.update({
+      programCode: programData.programCode,
+      programName: programData.programName
+    }, { where: { programCode: programData.programCode } }).then(() => {
+      resolve()
+    }).catch(err => reject("unable to update program (updateProgram)"))
+  })
+}
+const getProgramByCode = (pcode) => {
+  return new Promise((resolve, reject) => {
+    Program.findAll({ where: { programCode: pcode } }).then(function (data) {
+      resolve(data[0])
+    }).catch(err => {
+      reject("no results returned (getProgramByCode)")
+    })
+  })
+}
+
+const deleteProgramByCode = (pcode) => {
+  return new Promise((resolve, reject) => {
+    Program.destroy({ where: { programCode: pcode } }).then(function () {
+      resolve()
+    }).catch(err => {
+      reject("no results returned (deleteProgramByCode)")
+    })
+  })
+}
+const deleteStudentById = (id) => {
+  return new Promise((resolve, reject) => {
+    Student.destroy({ where: { studentID: id } }).then(function () {
+      resolve()
+    }).catch(err => {
+      reject("no results returned (deleteStudentById)")
+    })
+  })
+}
+
 
 module.exports = {
   initialize,
@@ -197,5 +252,10 @@ module.exports = {
   getStudentsByExpectedCredential,
   getStudentsByProgramCode,
   addStudent,
-  updateStudent
+  updateStudent,
+  addProgram,
+  updateProgram,
+  getProgramByCode,
+  deleteStudentById,
+  deleteProgramByCode
 };
