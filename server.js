@@ -283,14 +283,13 @@ app.get('/login', (req, res) => {
 app.post('/login', (req, res) => {
   req.body.userAgent = req.get('User-Agent');
 
-  dataServiceAuth.checkUser(req.body).then((user) => {
+  dataServiceAuth.checkUser(req.body).then((User) => {
 
     req.session.user = {
-      userName: user.userName,
-      email: user.email,
-      loginHistory: user.loginHistory
+      userName: User.userName,
+      email: User.email,
+      loginHistory: User.loginHistory
     }
-    console.log(req.session.user.loginHistory)
     res.redirect('/students')
   }).catch(err => {
     res.render('login', { errorMessage: err, userName: req.body.userName })

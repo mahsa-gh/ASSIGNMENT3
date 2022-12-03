@@ -44,7 +44,7 @@ const initialize = () => {
       console.log("connected to database successfully")
       resolve()
     }
-    ).catch(err => { reject("unable to sync the database") })
+    ).catch(err => { reject("unable to sync the database (sql)") })
 
   });
 };
